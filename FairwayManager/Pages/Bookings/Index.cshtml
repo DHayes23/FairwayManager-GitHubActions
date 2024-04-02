@@ -1,0 +1,60 @@
+﻿@page
+@model FairwayManager.Pages.Bookings.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Booking[0].TeeTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Booking[0].PlayerOne)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Booking[0].PlayerTwo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Booking[0].PlayerThree)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Booking[0].PlayerFour)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Booking) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.TeeTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PlayerOne.MembershipID)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PlayerTwo.MembershipID)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PlayerThree.MembershipID)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PlayerFour.MembershipID)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.BookingID">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.BookingID">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.BookingID">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

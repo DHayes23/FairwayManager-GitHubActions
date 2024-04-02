@@ -10,5 +10,7 @@ namespace FairwayManager.Models
         }
 
         public DbSet<Member> Members { get; set; }
+        public DbSet<Booking> Bookings { get; set; }
+
     }
 }
