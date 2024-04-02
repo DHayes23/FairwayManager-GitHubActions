@@ -60,7 +60,7 @@ namespace FairwayManager.Pages.Members
                     memberIQ = memberIQ.Where(m => m.Handicap > 20);
                     break;
                 case "between11and20":
-                    memberIQ = memberIQ.Where(m => m.Handicap >= 11 && m.Handicap <= 20);
+                    memberIQ = memberIQ.Where(m => m.Handicap >= 10 && m.Handicap <= 20);
                     break;
             }
 
