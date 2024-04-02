@@ -20,3 +20,24 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.no-underline {
+    text-decoration: none !important;
+}
+
+.btn-pink {
+    background-color: #FFD1DB;
+    color: black;
+    border-color: #FFD1DB;
+}
+
+.btn-pink:hover {
+    background-color: #FFD6DF;
+    border-color: #FFD6DF;
+    color: black;
+}
+
+.table-heading {
+    color: black;
+    font-weight: bold;
+}
