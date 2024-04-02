@@ -14,21 +14,31 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Member[0].MembershipID)
+                <a asp-page="./Index" asp-route-sortOrder="@Model.MembershipIDSortParm">
+                    @Html.DisplayNameFor(model => model.Member[0].MembershipID)
+                </a>
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Member[0].Name)
+                <a asp-page="./Index" asp-route-sortOrder="@Model.NameSortParm">
+                    @Html.DisplayNameFor(model => model.Member[0].Name)
+                </a>
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Member[0].Sex)
+                <a asp-page="./Index" asp-route-sortOrder="@Model.SexSortParm">
+                    @Html.DisplayNameFor(model => model.Member[0].Sex)
+                </a>
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Member[0].Email)
+                <a asp-page="./Index" asp-route-sortOrder="@Model.EmailSortParm">
+                    @Html.DisplayNameFor(model => model.Member[0].Email)
+                </a>
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Member[0].Handicap)
+                <a asp-page="./Index" asp-route-sortOrder="@Model.HandicapSortParm">
+                    @Html.DisplayNameFor(model => model.Member[0].Handicap)
+                </a>
             </th>
-            <th></th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
