@@ -10,31 +10,49 @@
 <p>
     <a asp-page="Create">Create New</a>
 </p>
+
+<div>
+    <a asp-page="./Index" class="btn btn-default">Reset All Filters</a>
+</div>
+
+<div>
+    <a asp-page="./Index" asp-route-sexFilter="" asp-route-handicapFilter="@Model.CurrentHandicapFilter" class="btn btn-default">Any Gender</a>
+    <a asp-page="./Index" asp-route-sexFilter="Male" asp-route-handicapFilter="@Model.CurrentHandicapFilter" class="btn btn-default">Male</a>
+    <a asp-page="./Index" asp-route-sexFilter="Female" asp-route-handicapFilter="@Model.CurrentHandicapFilter" class="btn btn-default">Female</a>
+</div>
+
+<div>
+    <a asp-page="./Index" asp-route-sexFilter="@Model.CurrentSexFilter" asp-route-handicapFilter="below10" class="btn btn-default">Handicap < 10</a>
+    <a asp-page="./Index" asp-route-sexFilter="@Model.CurrentSexFilter" asp-route-handicapFilter="above20" class="btn btn-default">Handicap > 20</a>
+    <a asp-page="./Index" asp-route-sexFilter="@Model.CurrentSexFilter" asp-route-handicapFilter="between11and20" class="btn btn-default">Handicap 11-20</a>
+    <a asp-page="./Index" asp-route-sexFilter="@Model.CurrentSexFilter" asp-route-handicapFilter="" class="btn btn-default">Any Handicap</a>
+</div>
+
 <table class="table">
     <thead>
         <tr>
             <th>
-                <a asp-page="./Index" asp-route-sortOrder="@Model.MembershipIDSortParm">
+                <a asp-page="./Index" asp-route-sortOrder="@Model.MembershipIDSortParm" asp-route-sexFilter="@Model.CurrentSexFilter" asp-route-handicapFilter="@Model.CurrentHandicapFilter">
                     @Html.DisplayNameFor(model => model.Member[0].MembershipID)
                 </a>
             </th>
             <th>
-                <a asp-page="./Index" asp-route-sortOrder="@Model.NameSortParm">
+                <a asp-page="./Index" asp-route-sortOrder="@Model.NameSortParm" asp-route-sexFilter="@Model.CurrentSexFilter" asp-route-handicapFilter="@Model.CurrentHandicapFilter">
                     @Html.DisplayNameFor(model => model.Member[0].Name)
                 </a>
             </th>
             <th>
-                <a asp-page="./Index" asp-route-sortOrder="@Model.SexSortParm">
+                <a asp-page="./Index" asp-route-sortOrder="@Model.SexSortParm" asp-route-sexFilter="@Model.CurrentSexFilter" asp-route-handicapFilter="@Model.CurrentHandicapFilter">
                     @Html.DisplayNameFor(model => model.Member[0].Sex)
                 </a>
             </th>
             <th>
-                <a asp-page="./Index" asp-route-sortOrder="@Model.EmailSortParm">
+                <a asp-page="./Index" asp-route-sortOrder="@Model.EmailSortParm" asp-route-sexFilter="@Model.CurrentSexFilter" asp-route-handicapFilter="@Model.CurrentHandicapFilter">
                     @Html.DisplayNameFor(model => model.Member[0].Email)
                 </a>
             </th>
             <th>
-                <a asp-page="./Index" asp-route-sortOrder="@Model.HandicapSortParm">
+                <a asp-page="./Index" asp-route-sortOrder="@Model.HandicapSortParm" asp-route-sexFilter="@Model.CurrentSexFilter" asp-route-handicapFilter="@Model.CurrentHandicapFilter">
                     @Html.DisplayNameFor(model => model.Member[0].Handicap)
                 </a>
             </th>

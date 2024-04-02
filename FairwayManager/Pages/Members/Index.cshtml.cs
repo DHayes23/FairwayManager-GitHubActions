@@ -18,7 +18,7 @@ namespace FairwayManager.Pages.Members
             _context = context;
         }
 
-        public IList<Member> Member { get; set; } = default!;
+        public IList<Member> Member { get; set; }
 
         public string MembershipIDSortParm { get; set; }
         public string NameSortParm { get; set; }
@@ -26,8 +26,14 @@ namespace FairwayManager.Pages.Members
         public string EmailSortParm { get; set; }
         public string HandicapSortParm { get; set; }
 
-        public async Task OnGetAsync(string sortOrder)
+        public string CurrentSexFilter { get; set; }
+        public string CurrentHandicapFilter { get; set; }
+
+        public async Task OnGetAsync(string sortOrder, string sexFilter, string handicapFilter)
         {
+            CurrentSexFilter = sexFilter;
+            CurrentHandicapFilter = handicapFilter;
+
             MembershipIDSortParm = String.IsNullOrEmpty(sortOrder) ? "membership_id_desc" : "";
             NameSortParm = sortOrder == "Name" ? "name_desc" : "Name";
             SexSortParm = sortOrder == "Sex" ? "sex_desc" : "Sex";
@@ -36,6 +42,27 @@ namespace FairwayManager.Pages.Members
 
             IQueryable<Member> memberIQ = from s in _context.Members
                                           select s;
+
+            if (!String.IsNullOrEmpty(sexFilter))
+            {
+                if (Enum.TryParse(sexFilter, true, out Sex sexEnum))
+                {
+                    memberIQ = memberIQ.Where(m => m.Sex == sexEnum);
+                }
+            }
+
+            switch (handicapFilter)
+            {
+                case "below10":
+                    memberIQ = memberIQ.Where(m => m.Handicap < 10);
+                    break;
+                case "above20":
+                    memberIQ = memberIQ.Where(m => m.Handicap > 20);
+                    break;
+                case "between11and20":
+                    memberIQ = memberIQ.Where(m => m.Handicap >= 11 && m.Handicap <= 20);
+                    break;
+            }
 
             switch (sortOrder)
             {
