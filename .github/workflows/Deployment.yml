@@ -1,4 +1,4 @@
-name: Development to Main Release with Notifications and Security Scans
+name: Deployment
 
 on:
   workflow_dispatch: # This pipeline is triggered manually.
