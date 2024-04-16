@@ -50,7 +50,7 @@ jobs:
       run: dotnet test --no-build -c Release --verbosity normal
 
     - name: Publish Application # Prepares the application for deployment by adding all of its files and dependencies to a folder.
-      run: dotnet publish -c Release -o ./publish
+      run: dotnet publish -r win-x64 --self-contained -c Release -o ./publish
 
     - name: Zip the Publish Folder for Elastic Beanstalk # Zips the published folder, making it suitable for deployment to AWS Elastic Beanstalk.
       run: zip -j deploy.zip ./publish/*
