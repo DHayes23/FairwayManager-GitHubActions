@@ -65,6 +65,7 @@ jobs:
         version_label: prod-${{ github.run_number }}
         region: ${{ secrets.AWS_REGION }}
         deployment_package: deploy.zip
+        wait_for_environment_recovery: 600
 
     - name: Send Success Email # Sends an email to the mailing list in the ToAddresses field, notifying members of the successful completion of the pipeline.
       if: success()
