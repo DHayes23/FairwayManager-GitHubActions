@@ -21,7 +21,7 @@ jobs:
       id: checkout
     - name: Check Checkout Status # Outputs a message to the console if the code checkout fails.
       if: steps.checkout.outcome == 'failure'
-      run: | # This and all subsequent echo commands will cause the termination of the pipeline. This will allow for quick identification of the stage of the pipeline that is failing.
+      run: |
         echo "Failed to checkout the code. Please check repository settings or network issues."
         exit 1
 
@@ -70,7 +70,6 @@ jobs:
           -Dsonar.organization=dhayes23
           -Dsonar.qualitygate.wait=true
 
-
     - name: Build # Compiles the project. (Doesn't restore dependencies as this is handled in an earlier stage)
       run: dotnet build --no-restore -c Release
       continue-on-error: true
@@ -101,10 +100,8 @@ jobs:
         echo "Publishing failed. Please check if there are issues with the project's configuration."
         exit 1
 
-    - name: Zip the Publish Folder for Elastic Beanstalk # Uses an external action to zip the published folder, making it suitable for deployment to AWS Elastic Beanstalk.
-      uses: montudor/action-zip@v0.1.1
-      with:
-        args: zip -r deploy.zip ./publish
+    - name: Zip the Publish Folder for Elastic Beanstalk # Zips the published folder, making it suitable for deployment to AWS Elastic Beanstalk.
+      run: zip -j deploy.zip ./publish/*
       continue-on-error: true
       id: zip
     - name: Check Zip Status # Outputs a message to the console if the zipping of the folder fails.
