@@ -122,7 +122,7 @@ jobs:
         environment_name: FairwayManager2-env
         version_label: prod-${{ github.run_number }}
         region: ${{ secrets.AWS_REGION }}
-        deployment_package: path/to/your/deployment/package.zip
+        deployment_package: deploy.zip
       continue-on-error: true
       id: deploy
     - name: Check Deploy Status # Outputs a message to the console if the deployment fails.
