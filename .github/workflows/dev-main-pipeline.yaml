@@ -1,4 +1,4 @@
-name: Development to Main Release
+name: Development to Main Release with Notifications and Security Scans
 
 on:
   workflow_dispatch: # This pipeline is triggered manually.
@@ -40,7 +40,7 @@ jobs:
     - name: Set Up .NET Core # Sets up the .NET environment of the specified version on the runner.
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.x'
+        dotnet-version: '8.0.x'
       continue-on-error: true
       id: setup-dotnet
     - name: Check .NET Setup Status # Outputs a message to the console if the .NET environment setup fails.
@@ -88,6 +88,20 @@ jobs:
       run: |
         echo "Tests failed. Check test results for details."
         exit 1
+
+    # - name: Scan for Vulnerabilities # Scans the code's dependencies for 'High Level' vulnerabilities.
+    #   uses: snyk/actions/dotnet-core@master
+    #   with:
+    #     command: test
+    #     args: '--severity-threshold=high'
+    #     snyk_token: ${{ secrets.SNYK_TOKEN }}
+    #   continue-on-error: true
+    #   id: security-scan
+    # - name: Check Security Scan Status # Outputs a message to the console if high level vulnerabilities are discovered in the dependencies.
+    #   if: steps.security-scan.outcome == 'failure'
+    #   run: |
+    #     echo "Security vulnerabilities detected. Review and address them before deploying."
+    #     exit 1
 
     - name: Publish Application # Prepares the application for deployment by adding all of its files and dependencies to a folder.
       run: dotnet publish -c Release -o ./publish
