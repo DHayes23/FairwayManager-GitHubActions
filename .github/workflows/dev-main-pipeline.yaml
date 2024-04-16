@@ -128,13 +128,15 @@ jobs:
         exit 1
 
     - name: Deploy to AWS Elastic Beanstalk # Uses an external action to deploy the application in the zipped folder to AWS Elastic Beanstalk.
-      uses: einaregilsson/beanstalk-deploy@v18
-      with:
-        application_name: FairwayManager2
-        environment_name: FairwayManager2-env
-        version_label: prod-${{ github.run_number }}
-        region: ${{ secrets.AWS_REGION }}
-        deployment_package: deploy.zip
+        uses: einaregilsson/beanstalk-deploy@v18
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: FairwayManager2
+          environment_name: FairwayManager2-env
+          version_label: prod-${{ github.run_number }}
+          region: ${{ secrets.AWS_REGION }}
+          deployment_package: path/to/your/deployment/package.zip
       continue-on-error: true
       id: deploy
     - name: Check Deploy Status # Outputs a message to the console if the deployment fails.
