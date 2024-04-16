@@ -14,6 +14,7 @@ namespace FairwayManager.Models
         [Key]
         public int MembershipID { get; set; }
 
+        [Required(ErrorMessage = "The Name field is required.")]
         [StringLength(30, MinimumLength = 5, ErrorMessage = "Please enter a name between 5 and 30 characters long.")]
         public string Name { get; set; }
 

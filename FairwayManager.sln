@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FairwayManager", "FairwayManager\FairwayManager.csproj", "{1819A72B-BA76-40D6-B17E-CF79D2667E99}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FairwayManager", "FairwayManager\FairwayManager.csproj", "{1819A72B-BA76-40D6-B17E-CF79D2667E99}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FairwayManager.Tests", "FairwayManager.Tests\FairwayManager.Tests.csproj", "{6D2BEB61-4BD8-481B-B720-D2E57918C638}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{1819A72B-BA76-40D6-B17E-CF79D2667E99}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1819A72B-BA76-40D6-B17E-CF79D2667E99}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1819A72B-BA76-40D6-B17E-CF79D2667E99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D2BEB61-4BD8-481B-B720-D2E57918C638}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D2BEB61-4BD8-481B-B720-D2E57918C638}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D2BEB61-4BD8-481B-B720-D2E57918C638}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D2BEB61-4BD8-481B-B720-D2E57918C638}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
