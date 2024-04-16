@@ -92,7 +92,7 @@ jobs:
         exit 1
 
     - name: Publish Application # Prepares the application for deployment by adding all of its files and dependencies to a folder.
-      run: dotnet publish -c Release -o ./publish
+      run: dotnet publish -c Release -o ./publish --self-contained false -r win-x64 --verbosity normal  # Adjust runtime identifier as necessary
       continue-on-error: true
       id: publish
     - name: Check Publish Status # Outputs a message to the console if publishing fails.
