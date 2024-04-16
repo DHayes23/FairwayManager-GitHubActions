@@ -64,6 +64,12 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=DHayes23_FairwayManager-GitHubActions
+          -Dsonar.organization=dhayes23
+          -Dsonar.qualitygate.wait=true
+
 
     - name: Build # Compiles the project. (Doesn't restore dependencies as this is handled in an earlier stage)
       run: dotnet build --no-restore -c Release
@@ -84,20 +90,6 @@ jobs:
       run: |
         echo "Tests failed. Check test results for details."
         exit 1
-
-    # - name: Scan for Vulnerabilities # Scans the code's dependencies for 'High Level' vulnerabilities.
-    #   uses: snyk/actions/dotnet-core@master
-    #   with:
-    #     command: test
-    #     args: '--severity-threshold=high'
-    #     snyk_token: ${{ secrets.SNYK_TOKEN }}
-    #   continue-on-error: true
-    #   id: security-scan
-    # - name: Check Security Scan Status # Outputs a message to the console if high level vulnerabilities are discovered in the dependencies.
-    #   if: steps.security-scan.outcome == 'failure'
-    #   run: |
-    #     echo "Security vulnerabilities detected. Review and address them before deploying."
-    #     exit 1
 
     - name: Publish Application # Prepares the application for deployment by adding all of its files and dependencies to a folder.
       run: dotnet publish -c Release -o ./publish
