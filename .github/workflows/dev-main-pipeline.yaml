@@ -59,15 +59,11 @@ jobs:
         echo "Failed to restore dependencies. Check the project's configuration and network issues."
         exit 1
 
-    - name: Lint Code # Checks the code for formatting issues.
-      run: dotnet format --check
-      continue-on-error: true
-      id: lint
-    - name: Check Linting Status # Outputs a message to the console if errors are detected in the code during linting.
-      if: steps.lint.outcome == 'failure'
-      run: |
-        echo "Linting errors detected. Please fix them before proceeding."
-        exit 1
+    - name: SonarCloud Scan # Scans the code with SonarCloud
+      uses: sonarsource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     - name: Build # Compiles the project. (Doesn't restore dependencies as this is handled in an earlier stage)
       run: dotnet build --no-restore -c Release
