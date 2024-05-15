@@ -6,6 +6,9 @@ on:
 jobs:
   build_test_deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
     - name: Configure AWS Credentials # Configures AWS credentials using GitHub secrets' environmental variables. 
