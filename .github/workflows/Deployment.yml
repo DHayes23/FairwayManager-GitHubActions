@@ -6,7 +6,7 @@ on:
 jobs:
   build_test_deploy:
     runs-on: ubuntu-latest
-    permissions:
+    permissions: # Allows CodeQL to access the resources it requires.
       contents: read
       security-events: write
 
@@ -22,7 +22,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Initialize CodeQL # Initialises CodeQL to scan C# code.
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: 'csharp'
 
@@ -55,7 +55,7 @@ jobs:
       run: dotnet build --no-restore -c Release
       
     - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       
     - name: Run Tests # Runs .NET tests
       run: dotnet test --no-build -c Release --verbosity normal
