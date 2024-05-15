@@ -65,6 +65,14 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-dotnet-build-
 
+    - name: Cache SonarCloud artifacts # Cache SonarCloud analysis
+      uses: actions/cache@v3
+      with:
+        path: .sonar/cache
+        key: ${{ runner.os }}-sonar-${{ hashFiles('**/*.cs', '**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-sonar-
+
     - name: SonarCloud Scan # Scans the code with SonarCloud
       uses: sonarsource/sonarcloud-github-action@master
       env:
@@ -75,14 +83,6 @@ jobs:
           -Dsonar.projectKey=DHayes23_FairwayManager-GitHubActions
           -Dsonar.organization=dhayes23
           -Dsonar.qualitygate.wait=true
-
-    - name: Cache SonarCloud artifacts # Cache SonarCloud analysis
-      uses: actions/cache@v3
-      with:
-        path: .sonar/cache
-        key: ${{ runner.os }}-sonar-${{ hashFiles('**/*.cs', '**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-sonar-
 
     - name: Build # Compiles the project. (Doesn't restore dependencies as this is handled in an earlier stage)
       run: dotnet build --no-restore -c Release
