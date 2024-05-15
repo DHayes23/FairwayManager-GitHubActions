@@ -18,6 +18,11 @@ jobs:
     - name: Checkout Code # Copies the code from the repository in which the action pipeline has been invoked.
       uses: actions/checkout@v3
 
+    - name: Initialize CodeQL # Initialises CodeQL to scan C# code.
+      uses: github/codeql-action/init@v2
+      with:
+        languages: 'csharp'
+
     - name: Send Start Email # Sends an email to the mailing list in the ToAddresses field, alerting members of the list to the start of the pipeline.
       run: |
         aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
@@ -45,7 +50,10 @@ jobs:
 
     - name: Build # Compiles the project. (Doesn't restore dependencies as this is handled in an earlier stage)
       run: dotnet build --no-restore -c Release
-
+      
+    - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
+      uses: github/codeql-action/analyze@v2
+      
     - name: Run Tests # Runs .NET tests
       run: dotnet test --no-build -c Release --verbosity normal
 
