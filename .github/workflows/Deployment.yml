@@ -25,6 +25,14 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: 'csharp'
+    
+    - name: Cache CodeQL Database # Cache CodeQL databases
+      uses: actions/cache@v3
+      with:
+        path: ./.github/codeql
+        key: ${{ runner.os }}-codeql-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-codeql-
 
     - name: Send Start Email # Sends an email to the mailing list in the ToAddresses field, alerting members of the list to the start of the pipeline.
       run: |
@@ -36,9 +44,26 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    - name: Cache .NET Core packages # Cache the .NET Core packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
 
     - name: Restore Dependencies # Connects to NuGet and downloads and installs the projets's dependencies.
       run: dotnet restore
+
+    - name: Cache .NET Build artifacts # Cache .NET build artifacts
+      uses: actions/cache@v3
+      with:
+        path: |
+          **/bin
+          **/obj
+        key: ${{ runner.os }}-dotnet-build-${{ hashFiles('**/*.cs', '**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-dotnet-build-
 
     - name: SonarCloud Scan # Scans the code with SonarCloud
       uses: sonarsource/sonarcloud-github-action@master
@@ -50,6 +75,14 @@ jobs:
           -Dsonar.projectKey=DHayes23_FairwayManager-GitHubActions
           -Dsonar.organization=dhayes23
           -Dsonar.qualitygate.wait=true
+
+    - name: Cache SonarCloud artifacts # Cache SonarCloud analysis
+      uses: actions/cache@v3
+      with:
+        path: .sonar/cache
+        key: ${{ runner.os }}-sonar-${{ hashFiles('**/*.cs', '**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-sonar-
 
     - name: Build # Compiles the project. (Doesn't restore dependencies as this is handled in an earlier stage)
       run: dotnet build --no-restore -c Release
