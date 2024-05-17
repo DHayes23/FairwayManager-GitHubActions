@@ -111,6 +111,17 @@ jobs:
           exit 1
         fi
 
+    - name: Notify Teams on Success # Sends a message in a Microsoft Teams channel, making the success of the pipeline known.
+      if: success()
+      uses: toko-bifrost/msteams-webhook-actions@v1.0.3
+      with:
+        url: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        title: 'Deployment Successful'
+        summary: 'The deployment pipeline has completed successfully.'
+        themeColor: '00FF00'
+        text: 'Deployment to production was successful.'
+        
+
     - name: Send Failure Email # NOTE: This stage will not trigger under normal circumstances, as the individual stages handle fail independently. Sends an email to the mailing list in the ToAddresses field, alerting members to the failure of the pipeline.
       if: failure()
       run: |
@@ -119,3 +130,13 @@ jobs:
           echo "Failed to send failure notification email."
           exit 1
         fi
+        
+    - name: Notify Teams on Failure # Sends a message in a Microsoft Teams channel, making the failure of the pipeline known.
+      if: failure()
+      uses: toko-bifrost/msteams-webhook-actions@v1.0.3
+      with:
+        url: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        title: 'Deployment Failed'
+        summary: 'The deployment pipeline has failed.'
+        themeColor: 'FF0000'
+        text: 'Deployment to production has FAILED.'
