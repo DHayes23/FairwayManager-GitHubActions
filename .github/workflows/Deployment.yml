@@ -113,7 +113,7 @@ jobs:
 
     - name: Notify Teams on Success # Sends a message in a Microsoft Teams channel, making the success of the pipeline known.
       if: success()
-      uses: toko-bifrost/msteams-webhook-actions@v1.0.3
+      uses: aliencube/microsoft-teams-notification@v1.0.0
       with:
         url: ${{ secrets.TEAMS_WEBHOOK_URL }}
         title: 'Deployment Successful'
@@ -133,7 +133,7 @@ jobs:
         
     - name: Notify Teams on Failure # Sends a message in a Microsoft Teams channel, making the failure of the pipeline known.
       if: failure()
-      uses: toko-bifrost/msteams-webhook-actions@v1.0.3
+      uses: aliencube/microsoft-teams-notification@v1.0.0
       with:
         url: ${{ secrets.TEAMS_WEBHOOK_URL }}
         title: 'Deployment Failed'
