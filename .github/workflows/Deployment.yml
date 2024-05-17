@@ -115,10 +115,10 @@ jobs:
       if: success()
       uses: aliencube/microsoft-teams-actions@v0.8.0
       with:
-        url: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
         title: 'Deployment Successful'
         summary: 'The deployment pipeline has completed successfully.'
-        themeColor: '00FF00'
+        theme_color: '00FF00'
         text: 'Deployment to production was successful.'
         
 
@@ -135,8 +135,8 @@ jobs:
       if: failure()
       uses: aliencube/microsoft-teams-actions@v0.8.0
       with:
-        url: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
         title: 'Deployment Failed'
         summary: 'The deployment pipeline has failed.'
-        themeColor: 'FF0000'
+        theme_color: 'FF0000'
         text: 'Deployment to production has FAILED.'
