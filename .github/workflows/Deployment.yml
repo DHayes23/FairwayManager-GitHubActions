@@ -33,6 +33,12 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: 'csharp'
+
+      - name: Upload CodeQL Database # Uploads the CodeQL database for access in analysis step.
+        uses: actions/upload-artifact@v2
+        with:
+          name: codeql-db
+          path: ./.github/codeql
           
       - name: Set Up .NET Core # Sets up the .NET environment of the specified version on the runner.
         uses: actions/setup-dotnet@v1
@@ -60,6 +66,12 @@ jobs:
     needs: code_preparation
     runs-on: ubuntu-latest
     steps:
+      - name: Download CodeQL Database # Downloads the CodeQL database to allow for analysis.
+        uses: actions/download-artifact@v2
+        with:
+          name: codeql-db
+          path: ./.github/codeql
+    
       - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
         uses: github/codeql-action/analyze@v3
 
