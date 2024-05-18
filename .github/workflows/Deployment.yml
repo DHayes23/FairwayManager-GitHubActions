@@ -3,12 +3,13 @@ name: Deployment
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   setup_and_configure:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
     steps:
       - name: Configure AWS Credentials # Configures AWS credentials using GitHub secrets' environmental variables.
         uses: aws-actions/configure-aws-credentials@v1
