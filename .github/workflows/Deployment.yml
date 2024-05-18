@@ -39,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: codeql-db
-          path: ./.github/codeql
+          path: /home/runner/work/_temp/codeql_databases/csharp
           
       - name: Set Up .NET Core # Sets up the .NET environment of the specified version on the runner.
         uses: actions/setup-dotnet@v1
