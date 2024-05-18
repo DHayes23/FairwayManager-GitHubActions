@@ -71,7 +71,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: codeql-db
-          path: ./.github/codeql
+          path: /home/runner/work/_temp/codeql_databases/csharp
     
       - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
         uses: github/codeql-action/analyze@v3
