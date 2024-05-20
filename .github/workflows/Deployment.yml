@@ -1,145 +1,142 @@
 name: Deployment
 
 on:
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  security-events: write
+  workflow_dispatch: # This pipeline is triggered manually.
 
 jobs:
-  setup_and_configure:
+  build_test_deploy:
     runs-on: ubuntu-latest
+    permissions: # Allows CodeQL to access the resources it requires.
+      contents: read
+      security-events: write
+
     steps:
-      - name: Configure AWS Credentials # Configures AWS credentials using GitHub secrets' environmental variables.
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-          
-      - name: Send Start Email # Sends an email to the mailing list in the ToAddresses field, alerting members of the list to the start of the pipeline.
-        run: |
-          aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
-          --message "Subject={Data=Deployment Started,Charset=utf8},Body={Text={Data=Deployment process has started for the main branch.,Charset=utf8}}"
+    
+    - name: Configure AWS Credentials # Configures AWS credentials using GitHub secrets' environmental variables. 
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
 
-  codeql_analysis:
-    needs: setup_and_configure
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code # Copies the code from the repository in which the action pipeline has been invoked.
-        uses: actions/checkout@v3
-        
-      - name: Set Up .NET Core # Sets up the .NET environment of the specified version on the runner.
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '8.0.x'
-        
-      - name: Initialize and Analyze with CodeQL # Initialises and analyses the code using CodeQL.
-        uses: github/codeql-action/analyze@v3
-        with:
-          languages: 'csharp'
+    - name: Send Start Email # Sends an email to the mailing list in the ToAddresses field, alerting members of the list to the start of the pipeline.
+      run: |
+        aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
+        --message "Subject={Data=Deployment Started,Charset=utf8},Body={Text={Data=Deployment process has started for the main branch.,Charset=utf8}}"
+  
+    - name: Checkout Code # Copies the code from the repository in which the action pipeline has been invoked.
+      uses: actions/checkout@v3
 
-  sonarcloud_analysis:
-    needs: setup_and_configure
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code # Copies the code from the repository in which the action pipeline has been invoked.
-        uses: actions/checkout@v3
+    - name: Initialize CodeQL # Initialises CodeQL to scan C# code.
+      uses: github/codeql-action/init@v3
+      with:
+        languages: 'csharp'
 
-      - name: Set Up .NET Core # Sets up the .NET environment of the specified version on the runner.
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '8.0.x'
+    - name: Set Up .NET Core # Sets up the .NET environment of the specified version on the runner.
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '8.0.x'
 
-      - name: SonarCloud Scan # Scans the code with SonarCloud.
-        uses: sonarsource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    - name: Cache .NET Core packages # Cache the .NET Core packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
 
-  build_and_test:
-    needs: [sonarcloud_analysis, codeql_analysis]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Restore Dependencies # Connects to NuGet and downloads and installs the projets's dependencies.
-        run: dotnet restore
-        
-      - name: Cache .NET Build artifacts # Cache .NET build artifacts
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/bin
-            **/obj
-          key: ${{ runner.os }}-dotnet-build-${{ hashFiles('**/*.cs', '**/*.csproj') }}
-          restore-keys: ${{ runner.os }}-dotnet-build-
-          
-      - name: Build # Compiles the project. (Doesn't restore dependencies as this is handled in an earlier stage)
-        run: dotnet build --no-restore -c Release
-        
-      - name: Run Tests # Runs .NET tests
-        run: dotnet test --no-build -c Release --logger "trx;LogFileName=test_results.trx" --results-directory ./TestResults
-        
-      - name: Upload Test Results # Uploads the test results for further analysis.
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-results
-          path: ./TestResults/test_results.trx
+    - name: Restore Dependencies # Connects to NuGet and downloads and installs the projets's dependencies.
+      run: dotnet restore
 
-  deploy:
-    needs: build_and_test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish Application # Prepares the application for deployment by adding all of its files and dependencies to a folder.
-        run: dotnet publish -r win-x64 --self-contained -c Release -o ./publish
-        
-      - name: Zip the Publish Folder for Elastic Beanstalk # Zips the published folder, making it suitable for deployment to AWS Elastic Beanstalk.
-        run: zip -j deploy.zip ./publish/*
-        
-      - name: Deploy to AWS Elastic Beanstalk # Uses an external action to deploy the application in the zipped folder to AWS Elastic Beanstalk.
-        uses: einaregilsson/beanstalk-deploy@v18
-        with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: FairwayManager2
-          environment_name: FairwayManager2-env-win-2
-          version_label: prod-${{ github.run_number }}
-          region: ${{ secrets.AWS_REGION }}
-          deployment_package: deploy.zip
-          wait_for_environment_recovery: 600
+    - name: Cache .NET Build artifacts # Cache .NET build artifacts
+      uses: actions/cache@v3
+      with:
+        path: |
+          **/bin
+          **/obj
+        key: ${{ runner.os }}-dotnet-build-${{ hashFiles('**/*.cs', '**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-dotnet-build-
 
-  notify:
-    needs: deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send Success Email # Sends an email to the mailing list in the ToAddresses field, notifying members of the successful completion of the pipeline.
-        if: success()
-        run: | 
-          aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
-          --message "Subject={Data=Deployment Successful,Charset=utf8},Body={Text={Data=Deployment to production was successful.,Charset=utf8}}"
-          
-      - name: Notify Teams on Success # Sends a message in a Microsoft Teams channel, making the success of the pipeline known.
-        if: success()
-        uses: aliencube/microsoft-teams-actions@v0.8.0
-        with:
-          webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
-          title: 'Deployment Successful'
-          summary: 'The deployment pipeline has completed successfully.'
-          theme_color: '00FF00'
-          text: 'Deployment to production was successful.'
-          
-      - name: Send Failure Email # Sends an email to the mailing list in the ToAddresses field, alerting members to the failure of the pipeline.
-        if: failure()
-        run: |
-          aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
-          --message "Subject={Data=Deployment Failed,Charset=utf8},Body={Text={Data=Please see the pipeline logs for further details.,Charset=utf8}}"
-          
-      - name: Notify Teams on Failure # Sends a message in a Microsoft Teams channel, making the failure of the pipeline known.
-        if: failure()
-        uses: aliencube/microsoft-teams-actions@v0.8.0
-        with:
-          webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
-          title: 'Deployment Failed'
-          summary: 'The deployment pipeline has failed.'
-          theme_color: 'FF0000'
-          text: 'Deployment to production has FAILED.'
+    - name: SonarCloud Scan # Scans the code with SonarCloud
+      uses: sonarsource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=DHayes23_FairwayManager-GitHubActions
+          -Dsonar.organization=dhayes23
+          -Dsonar.qualitygate.wait=true
+
+    - name: Build # Compiles the project. (Doesn't restore dependencies as this is handled in an earlier stage)
+      run: dotnet build --no-restore -c Release
+      
+    - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
+      uses: github/codeql-action/analyze@v3
+      
+    - name: Run Tests # Runs .NET tests
+      run: dotnet test --no-build -c Release --logger "trx;LogFileName=test_results.trx" --results-directory ./TestResults
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-results
+        path: ./TestResults/test_results.trx
+
+    - name: Publish Application # Prepares the application for deployment by adding all of its files and dependencies to a folder.
+      run: dotnet publish -r win-x64 --self-contained -c Release -o ./publish
+
+    - name: Zip the Publish Folder for Elastic Beanstalk # Zips the published folder, making it suitable for deployment to AWS Elastic Beanstalk.
+      run: zip -j deploy.zip ./publish/*
+
+    - name: Deploy to AWS Elastic Beanstalk # Uses an external action to deploy the application in the zipped folder to AWS Elastic Beanstalk.
+      uses: einaregilsson/beanstalk-deploy@v18
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: FairwayManager2
+        environment_name: FairwayManager2-env-win-2
+        version_label: prod-${{ github.run_number }}
+        region: ${{ secrets.AWS_REGION }}
+        deployment_package: deploy.zip
+        wait_for_environment_recovery: 600
+
+    - name: Send Success Email # Sends an email to the mailing list in the ToAddresses field, notifying members of the successful completion of the pipeline.
+      if: success()
+      run: |
+        if ! aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
+        --message "Subject={Data=Deployment Successful,Charset=utf8},Body={Text={Data=Deployment to production was successful.,Charset=utf8}}"; then
+          echo "Failed to send success notification email."
+          exit 1
+        fi
+
+    - name: Notify Teams on Success # Sends a message in a Microsoft Teams channel, making the success of the pipeline known.
+      if: success()
+      uses: aliencube/microsoft-teams-actions@v0.8.0
+      with:
+        webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        title: 'Deployment Successful'
+        summary: 'The deployment pipeline has completed successfully.'
+        theme_color: '00FF00'
+        text: 'Deployment to production was successful.'
+        
+
+    - name: Send Failure Email # NOTE: This stage will not trigger under normal circumstances, as the individual stages handle fail independently. Sends an email to the mailing list in the ToAddresses field, alerting members to the failure of the pipeline.
+      if: failure()
+      run: |
+        if ! aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
+        --message "Subject={Data=Deployment Failed,Charset=utf8},Body={Text={Data=Please see the pipeline logs for further details.,Charset=utf8}}"; then
+          echo "Failed to send failure notification email."
+          exit 1
+        fi
+        
+    - name: Notify Teams on Failure # Sends a message in a Microsoft Teams channel, making the failure of the pipeline known.
+      if: failure()
+      uses: aliencube/microsoft-teams-actions@v0.8.0
+      with:
+        webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        title: 'Deployment Failed'
+        summary: 'The deployment pipeline has failed.'
+        theme_color: 'FF0000'
+        text: 'Deployment to production has FAILED.'
