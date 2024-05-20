@@ -23,58 +23,40 @@ jobs:
           aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
           --message "Subject={Data=Deployment Started,Charset=utf8},Body={Text={Data=Deployment process has started for the main branch.,Charset=utf8}}"
 
-  code_preparation:
+  codeql_analysis:
     needs: setup_and_configure
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code # Copies the code from the repository in which the action pipeline has been invoked.
         uses: actions/checkout@v3
         
-      - name: Initialize CodeQL # Initialises CodeQL to scan C# code.
-        uses: github/codeql-action/init@v3
-        with:
-          languages: 'csharp'
-
-      - name: Upload CodeQL Database # Uploads the CodeQL database for access in analysis step.
-        uses: actions/upload-artifact@v2
-        with:
-          name: codeql-db
-          path: /home/runner/work/_temp/codeql_databases/csharp
-          
       - name: Set Up .NET Core # Sets up the .NET environment of the specified version on the runner.
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '8.0.x'
-          
-      - name: Cache .NET Core packages # Cache the .NET Core packages
-        uses: actions/cache@v3
+        
+      - name: Initialize and Analyze with CodeQL # Initialises and analyses the code using CodeQL.
+        uses: github/codeql-action/analyze@v3
         with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
-          restore-keys: ${{ runner.os }}-nuget-
+          languages: 'csharp'
 
   sonarcloud_analysis:
-    needs: code_preparation
+    needs: setup_and_configure
     runs-on: ubuntu-latest
     steps:
-      - name: SonarCloud Scan # Scans the code with SonarCloud
+      - name: Checkout Code # Copies the code from the repository in which the action pipeline has been invoked.
+        uses: actions/checkout@v3
+
+      - name: Set Up .NET Core # Sets up the .NET environment of the specified version on the runner.
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: SonarCloud Scan # Scans the code with SonarCloud.
         uses: sonarsource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-  codeql_analysis:
-    needs: code_preparation
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download CodeQL Database # Downloads the CodeQL database to allow for analysis.
-        uses: actions/download-artifact@v2
-        with:
-          name: codeql-db
-          path: /home/runner/work/_temp/codeql_databases/csharp
-    
-      - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
-        uses: github/codeql-action/analyze@v3
 
   build_and_test:
     needs: [sonarcloud_analysis, codeql_analysis]
@@ -98,7 +80,7 @@ jobs:
       - name: Run Tests # Runs .NET tests
         run: dotnet test --no-build -c Release --logger "trx;LogFileName=test_results.trx" --results-directory ./TestResults
         
-      - name: Upload Test Results
+      - name: Upload Test Results # Uploads the test results for further analysis.
         uses: actions/upload-artifact@v2
         with:
           name: test-results
