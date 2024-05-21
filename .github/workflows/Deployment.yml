@@ -4,6 +4,7 @@ on:
   workflow_dispatch: # This pipeline is triggered manually.
 
 jobs:
+
   build_test_deploy:
     runs-on: ubuntu-latest
     permissions: # Allows CodeQL to access the resources it requires.
@@ -102,41 +103,50 @@ jobs:
         deployment_package: deploy.zip
         wait_for_environment_recovery: 600
 
-    - name: Send Success Email # Sends an email to the mailing list in the ToAddresses field, notifying members of the successful completion of the pipeline.
-      if: success()
-      run: |
-        if ! aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
-        --message "Subject={Data=Deployment Successful,Charset=utf8},Body={Text={Data=Deployment to production was successful.,Charset=utf8}}"; then
-          echo "Failed to send success notification email."
-          exit 1
-        fi
+  notify:
+  
+    needs: build_test_deploy
+    runs-on: ubuntu-latest
+    if: always() # Runs this job regardless of the previous job's result. (Still requires the previous job to complete)
+    
+    steps:
+    
+      - name: Configure AWS Credentials # Configures AWS credentials for the notifications job.
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+  
+      - name: Send Success Email # Sends an email notifying of successful deployment.
+        if: needs.build_test_deploy.outputs.status == 'success'
+        run: |
+          aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
+          --message "Subject={Data=Deployment Successful,Charset=utf8},Body={Text={Data=Deployment to production was successful.,Charset=utf8}}"
+  
+      - name: Notify Teams on Success # Sends a message in a Microsoft Teams channel notifying of successful deployment.
+        if: needs.build_test_deploy.outputs.status == 'success'
+        uses: aliencube/microsoft-teams-actions@v0.8.0
+        with:
+          webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          title: 'Deployment Successful'
+          summary: 'The deployment pipeline has completed successfully.'
+          theme_color: '00FF00'
+          text: 'Deployment to production was successful.'
+  
+      - name: Send Failure Email # Sends an email notifying of a failed deployment.
+        if: needs.build_test_deploy.outputs.status == 'failure'
+        run: |
+          aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
+          --message "Subject={Data=Deployment Failed,Charset=utf8},Body={Text={Data=Please see the pipeline logs for further details.,Charset=utf8}}"
+  
+      - name: Notify Teams on Failure # Sends a message in a Microsoft Teams channel notifying of failed deployment.
+        if: needs.build_test_deploy.outputs.status == 'failure'
+        uses: aliencube/microsoft-teams-actions@v0.8.0
+        with:
+          webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          title: 'Deployment Failed'
+          summary: 'The deployment pipeline has failed.'
+          theme_color: 'FF0000'
+          text: 'Deployment to production has FAILED.'
 
-    - name: Notify Teams on Success # Sends a message in a Microsoft Teams channel, making the success of the pipeline known.
-      if: success()
-      uses: aliencube/microsoft-teams-actions@v0.8.0
-      with:
-        webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
-        title: 'Deployment Successful'
-        summary: 'The deployment pipeline has completed successfully.'
-        theme_color: '00FF00'
-        text: 'Deployment to production was successful.'
-        
-
-    - name: Send Failure Email # NOTE: This stage will not trigger under normal circumstances, as the individual stages handle fail independently. Sends an email to the mailing list in the ToAddresses field, alerting members to the failure of the pipeline.
-      if: failure()
-      run: |
-        if ! aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
-        --message "Subject={Data=Deployment Failed,Charset=utf8},Body={Text={Data=Please see the pipeline logs for further details.,Charset=utf8}}"; then
-          echo "Failed to send failure notification email."
-          exit 1
-        fi
-        
-    - name: Notify Teams on Failure # Sends a message in a Microsoft Teams channel, making the failure of the pipeline known.
-      if: failure()
-      uses: aliencube/microsoft-teams-actions@v0.8.0
-      with:
-        webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
-        title: 'Deployment Failed'
-        summary: 'The deployment pipeline has failed.'
-        theme_color: 'FF0000'
-        text: 'Deployment to production has FAILED.'
