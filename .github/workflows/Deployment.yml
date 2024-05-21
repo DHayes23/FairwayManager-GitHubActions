@@ -25,6 +25,9 @@ jobs:
         aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
         --message "Subject={Data=Deployment Started,Charset=utf8},Body={Text={Data=Deployment process has started for the main branch.,Charset=utf8}}"
 
+    - name: Test Fail
+      run: exit 1        
+
     - name: Checkout Code # Copies the code from the repository in which the action pipeline has been invoked.
       uses: actions/checkout@v3
       
