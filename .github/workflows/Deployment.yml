@@ -1,7 +1,12 @@
 name: Deployment
 
 on:
-  workflow_dispatch: # This pipeline is triggered manually.
+  push: # The pipeline will be triggered when a push is made to main/development branches.
+    branches:
+      - main
+      - development
+      
+  workflow_dispatch: # This pipeline can be triggered manually.
 
 jobs:
 
@@ -105,6 +110,7 @@ jobs:
           -Dsonar.qualitygate.wait=true
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     needs: [build_test, sonarcloud_analysis]
     runs-on: ubuntu-latest
     
@@ -131,7 +137,7 @@ jobs:
   notify_success:
     needs: [build_test, sonarcloud_analysis, deploy]
     runs-on: ubuntu-latest
-    if: success() # Only run this job if all of the needed jobs are successful
+    if: github.ref == 'refs/heads/main' && success() # Only run this job if all of the needed jobs are successful
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -159,7 +165,7 @@ jobs:
   notify_failure:
     needs: [build_test, sonarcloud_analysis, deploy]
     runs-on: ubuntu-latest
-    if: failure() # Only run this job if any of the needed jobs failed or were skipped
+    if: github.ref == 'refs/heads/main' && failure() # Only run this job if any of the needed jobs failed or were skipped
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
