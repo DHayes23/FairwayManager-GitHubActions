@@ -23,10 +23,7 @@ jobs:
     - name: Send Start Email # Sends an email to the mailing list in the ToAddresses field, alerting members of the list to the start of the pipeline.
       run: |
         aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
-        --message "Subject={Data=Deployment Started,Charset=utf8},Body={Text={Data=Deployment process has started for the main branch.,Charset=utf8}}"
-
-    - name: Test Fail
-      run: exit 1        
+        --message "Subject={Data=Deployment Started,Charset=utf8},Body={Text={Data=Deployment process has started for the main branch.,Charset=utf8}}"    
 
     - name: Checkout Code # Copies the code from the repository in which the action pipeline has been invoked.
       uses: actions/checkout@v3
@@ -93,9 +90,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Test Fail
-      run: exit 1
-
     - name: Checkout Code # Necessary for SonarCloud analysis to access the source code.
       uses: actions/checkout@v3
 
@@ -115,6 +109,10 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+
+    - name: Test Fail
+      run: exit 1    
+
     - name: Download Deployment Package # Downloads deployment package for use in next step.
       uses: actions/download-artifact@v2
       with:
