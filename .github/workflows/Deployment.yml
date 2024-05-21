@@ -92,6 +92,10 @@ jobs:
   sonarcloud_analysis:
     runs-on: ubuntu-latest
     steps:
+
+    - name: Test Fail
+      run: exit 1
+
     - name: Checkout Code # Necessary for SonarCloud analysis to access the source code.
       uses: actions/checkout@v3
 
