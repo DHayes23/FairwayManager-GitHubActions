@@ -138,9 +138,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Send Success Email
+      - name: Send Success Email # Sends an email notifying of successful deployment.
+        if: ${{ needs.deploy.result == 'success' }}
         run: |
-          aws ses send-email --from "example@gmail.com" --destination "ToAddresses=example@gmail.com" \
+          aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
           --message "Subject={Data=Deployment Successful,Charset=utf8},Body={Text={Data=Deployment to production was successful.,Charset=utf8}}"
 
       - name: Notify Teams of Success # Sends a message in a Microsoft Teams channel notifying of successful deployment.
@@ -165,10 +166,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Send Failure Email
+      - name: Send Failure Email # Sends an email notifying of a failed deployment.
+        if: ${{ needs.deploy.result == 'failure' || (needs.build_test.result == 'failure' || needs.sonarcloud_analysis.result == 'failure') }}
         run: |
-          aws ses send-email --from "example@gmail.com" --destination "ToAddresses=example@gmail.com" \
-          --message "Subject={Data=Deployment Failed,Charset=utf8},Body={Text={Data=Please check the pipeline logs for details.,Charset=utf8}}"
+          aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
+          --message "Subject={Data=Deployment Failed,Charset=utf8},Body={Text={Data=Please see the pipeline logs for further details.,Charset=utf8}}"
 
       - name: Notify Teams of Failure # Sends a message in a Microsoft Teams channel notifying of failed deployment.
         if: ${{ needs.deploy.result == 'failure' }}
