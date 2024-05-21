@@ -119,13 +119,13 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
   
       - name: Send Success Email # Sends an email notifying of successful deployment.
-        if: needs.build_test_deploy.outputs.status == 'success'
+        if: ${{ needs.build_test_deploy.result == 'success' }}
         run: |
           aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
           --message "Subject={Data=Deployment Successful,Charset=utf8},Body={Text={Data=Deployment to production was successful.,Charset=utf8}}"
   
       - name: Notify Teams on Success # Sends a message in a Microsoft Teams channel notifying of successful deployment.
-        if: needs.build_test_deploy.outputs.status == 'success'
+        if: ${{ needs.build_test_deploy.result == 'success' }}
         uses: aliencube/microsoft-teams-actions@v0.8.0
         with:
           webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
@@ -135,13 +135,13 @@ jobs:
           text: 'Deployment to production was successful.'
   
       - name: Send Failure Email # Sends an email notifying of a failed deployment.
-        if: needs.build_test_deploy.outputs.status == 'failure'
+        if: ${{ needs.build_test_deploy.result == 'failure' }}
         run: |
           aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
           --message "Subject={Data=Deployment Failed,Charset=utf8},Body={Text={Data=Please see the pipeline logs for further details.,Charset=utf8}}"
   
       - name: Notify Teams on Failure # Sends a message in a Microsoft Teams channel notifying of failed deployment.
-        if: needs.build_test_deploy.outputs.status == 'failure'
+        if: ${{ needs.build_test_deploy.result == 'failure' }}
         uses: aliencube/microsoft-teams-actions@v0.8.0
         with:
           webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
