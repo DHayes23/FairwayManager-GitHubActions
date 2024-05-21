@@ -12,8 +12,7 @@ jobs:
       security-events: write
 
     steps:
-    
-    - name: Configure AWS Credentials # Configures AWS credentials using GitHub secrets' environmental variables. 
+    - name: Configure AWS Credentials # Configures AWS credentials using GitHub secrets' environmental variables.
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -27,11 +26,6 @@ jobs:
 
     - name: Checkout Code # Copies the code from the repository in which the action pipeline has been invoked.
       uses: actions/checkout@v3
-
-    - name: Initialize CodeQL # Initialises CodeQL to scan C# code.
-      uses: github/codeql-action/init@v3
-      with:
-        languages: 'csharp'
 
     - name: Set Up .NET Core # Sets up the .NET environment of the specified version on the runner.
       uses: actions/setup-dotnet@v1
@@ -59,22 +53,8 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-dotnet-build-
 
-    - name: SonarCloud Scan # Scans the code with SonarCloud
-      uses: sonarsource/sonarcloud-github-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      with:
-        args: >
-          -Dsonar.projectKey=DHayes23_FairwayManager-GitHubActions
-          -Dsonar.organization=dhayes23
-          -Dsonar.qualitygate.wait=true
-
     - name: Build # Compiles the project. (Doesn't restore dependencies as this is handled in an earlier stage)
       run: dotnet build --no-restore -c Release
-
-    - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
-      uses: github/codeql-action/analyze@v3
 
     - name: Run Tests # Runs .NET tests
       run: dotnet test --no-build -c Release --logger "trx;LogFileName=test_results.trx" --results-directory ./TestResults
@@ -91,18 +71,50 @@ jobs:
     - name: Zip the Publish Folder for Elastic Beanstalk # Zips the published folder, making it suitable for deployment to AWS Elastic Beanstalk.
       run: zip -j deploy.zip ./publish/*
 
-    - name: Upload Deployment Package # Uploads 
+    - name: Upload Deployment Package # Uploads the zipped deployment package to a specified artifact storage.
       uses: actions/upload-artifact@v2
       with:
         name: deployment-package
         path: deploy.zip
 
-  deploy:
+  sonarcloud_analysis:
     needs: build_test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code # Necessary for SonarCloud analysis to access the source code.
+      uses: actions/checkout@v3
+
+    - name: SonarCloud Scan # Scans the code with SonarCloud
+      uses: sonarsource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=DHayes23_FairwayManager-GitHubActions
+          -Dsonar.organization=dhayes23
+          -Dsonar.qualitygate.wait=true
+
+  codeql_analysis:
+    needs: build_test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code # Necessary for CodeQL analysis to access the source code.
+      uses: actions/checkout@v3
+
+    - name: Initialize CodeQL # Initializes CodeQL to scan C# code.
+      uses: github/codeql-action/init@v3
+      with:
+        languages: 'csharp'
+
+    - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
+      uses: github/codeql-action/analyze@v3
+
+  deploy:
+    needs: [sonarcloud_analysis, codeql_analysis]
     runs-on: ubuntu-latest
     
     steps:
-
     - name: Download Deployment Package # Downloads deployment package for use in next step.
       uses: actions/download-artifact@v2
       with:
@@ -122,48 +134,46 @@ jobs:
         wait_for_environment_recovery: 600
 
   notify:
-  
     needs: deploy
     runs-on: ubuntu-latest
     if: always() # Runs this job regardless of the deploy job's result. (But will wait for the deploy job to succeed/fail)
     
     steps:
-    
-      - name: Configure AWS Credentials # Configures AWS credentials for the notifications job.
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-  
-      - name: Send Success Email # Sends an email notifying of successful deployment.
-        if: ${{ needs.deploy.result == 'success' }}
-        run: |
-          aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
-          --message "Subject={Data=Deployment Successful,Charset=utf8},Body={Text={Data=Deployment to production was successful.,Charset=utf8}}"
-  
-      - name: Notify Teams of Success # Sends a message in a Microsoft Teams channel notifying of successful deployment.
-        if: ${{ needs.deploy.result == 'success' }}
-        uses: aliencube/microsoft-teams-actions@v0.8.0
-        with:
-          webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
-          title: 'Deployment Successful'
-          summary: 'The deployment pipeline has completed successfully.'
-          theme_color: '00FF00'
-          text: 'Deployment to production was successful.'
-  
-      - name: Send Failure Email # Sends an email notifying of a failed deployment.
-        if: ${{ needs.deploy.result == 'failure' }}
-        run: |
-          aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
-          --message "Subject={Data=Deployment Failed,Charset=utf8},Body={Text={Data=Please see the pipeline logs for further details.,Charset=utf8}}"
-  
-      - name: Notify Teams of Failure # Sends a message in a Microsoft Teams channel notifying of failed deployment.
-        if: ${{ needs.deploy.result == 'failure' }}
-        uses: aliencube/microsoft-teams-actions@v0.8.0
-        with:
-          webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
-          title: 'Deployment Failed'
-          summary: 'The deployment pipeline has failed.'
-          theme_color: 'FF0000'
-          text: 'Deployment to production has FAILED.'
+    - name: Configure AWS Credentials # Configures AWS credentials for the notifications job.
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Send Success Email # Sends an email notifying of successful deployment.
+      if: ${{ needs.deploy.result == 'success' }}
+      run: |
+        aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
+        --message "Subject={Data=Deployment Successful,Charset=utf8},Body={Text={Data=Deployment to production was successful.,Charset=utf8}}"
+
+    - name: Notify Teams of Success # Sends a message in a Microsoft Teams channel notifying of successful deployment.
+      if: ${{ needs.deploy.result == 'success' }}
+      uses: aliencube/microsoft-teams-actions@v0.8.0
+      with:
+        webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        title: 'Deployment Successful'
+        summary: 'The deployment pipeline has completed successfully.'
+        theme_color: '00FF00'
+        text: 'Deployment to production was successful.'
+
+    - name: Send Failure Email # Sends an email notifying of a failed deployment.
+      if: ${{ needs.deploy.result == 'failure' }}
+      run: |
+        aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
+        --message "Subject={Data=Deployment Failed,Charset=utf8},Body={Text={Data=Please see the pipeline logs for further details.,Charset=utf8}}"
+
+    - name: Notify Teams of Failure # Sends a message in a Microsoft Teams channel notifying of failed deployment.
+      if: ${{ needs.deploy.result == 'failure' }}
+      uses: aliencube/microsoft-teams-actions@v0.8.0
+      with:
+        webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        title: 'Deployment Failed'
+        summary: 'The deployment pipeline has failed.'
+        theme_color: 'FF0000'
+        text: 'Deployment to production has FAILED.'
