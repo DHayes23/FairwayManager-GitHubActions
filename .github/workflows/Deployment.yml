@@ -27,6 +27,11 @@ jobs:
 
     - name: Checkout Code # Copies the code from the repository in which the action pipeline has been invoked.
       uses: actions/checkout@v3
+      
+    - name: Initialize CodeQL # Initializes CodeQL to scan C# code.
+      uses: github/codeql-action/init@v3
+      with:
+        languages: 'csharp'
 
     - name: Set Up .NET Core # Sets up the .NET environment of the specified version on the runner.
       uses: actions/setup-dotnet@v1
@@ -65,11 +70,6 @@ jobs:
       with:
         name: test-results
         path: ./TestResults/test_results.trx
-
-    - name: Initialize CodeQL # Initializes CodeQL to scan C# code.
-      uses: github/codeql-action/init@v3
-      with:
-        languages: 'csharp'
 
     - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
       uses: github/codeql-action/analyze@v3
