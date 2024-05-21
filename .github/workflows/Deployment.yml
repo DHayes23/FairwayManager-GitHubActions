@@ -5,7 +5,7 @@ on:
 
 jobs:
 
-  build_test_deploy:
+  build_test:
     runs-on: ubuntu-latest
     permissions: # Allows CodeQL to access the resources it requires.
       contents: read
@@ -24,7 +24,7 @@ jobs:
       run: |
         aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
         --message "Subject={Data=Deployment Started,Charset=utf8},Body={Text={Data=Deployment process has started for the main branch.,Charset=utf8}}"
-  
+
     - name: Checkout Code # Copies the code from the repository in which the action pipeline has been invoked.
       uses: actions/checkout@v3
 
@@ -46,7 +46,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
-    - name: Restore Dependencies # Connects to NuGet and downloads and installs the projets's dependencies.
+    - name: Restore Dependencies # Connects to NuGet and downloads and installs the projects' dependencies.
       run: dotnet restore
 
     - name: Cache .NET Build artifacts # Cache .NET build artifacts
@@ -72,10 +72,10 @@ jobs:
 
     - name: Build # Compiles the project. (Doesn't restore dependencies as this is handled in an earlier stage)
       run: dotnet build --no-restore -c Release
-      
+
     - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
       uses: github/codeql-action/analyze@v3
-      
+
     - name: Run Tests # Runs .NET tests
       run: dotnet test --no-build -c Release --logger "trx;LogFileName=test_results.trx" --results-directory ./TestResults
 
@@ -91,6 +91,24 @@ jobs:
     - name: Zip the Publish Folder for Elastic Beanstalk # Zips the published folder, making it suitable for deployment to AWS Elastic Beanstalk.
       run: zip -j deploy.zip ./publish/*
 
+    - name: Upload Deployment Package # Uploads 
+      uses: actions/upload-artifact@v2
+      with:
+        name: deployment-package
+        path: deploy.zip
+
+  deploy:
+    needs: build_test
+    runs-on: ubuntu-latest
+    
+    steps:
+
+    - name: Download Deployment Package # Downloads deployment package for use in next step.
+      uses: actions/download-artifact@v2
+      with:
+        name: deployment-package
+        path: ./
+
     - name: Deploy to AWS Elastic Beanstalk # Uses an external action to deploy the application in the zipped folder to AWS Elastic Beanstalk.
       uses: einaregilsson/beanstalk-deploy@v18
       with:
@@ -105,9 +123,9 @@ jobs:
 
   notify:
   
-    needs: build_test_deploy
+    needs: deploy
     runs-on: ubuntu-latest
-    if: always() # Runs this job regardless of the previous job's result. (Still requires the previous job to complete)
+    if: always() # Runs this job regardless of the deploy job's result. (But will wait for the deploy job to succeed/fail)
     
     steps:
     
@@ -119,13 +137,13 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
   
       - name: Send Success Email # Sends an email notifying of successful deployment.
-        if: ${{ needs.build_test_deploy.result == 'success' }}
+        if: ${{ needs.deploy.result == 'success' }}
         run: |
           aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
           --message "Subject={Data=Deployment Successful,Charset=utf8},Body={Text={Data=Deployment to production was successful.,Charset=utf8}}"
   
       - name: Notify Teams of Success # Sends a message in a Microsoft Teams channel notifying of successful deployment.
-        if: ${{ needs.build_test_deploy.result == 'success' }}
+        if: ${{ needs.deploy.result == 'success' }}
         uses: aliencube/microsoft-teams-actions@v0.8.0
         with:
           webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
@@ -135,13 +153,13 @@ jobs:
           text: 'Deployment to production was successful.'
   
       - name: Send Failure Email # Sends an email notifying of a failed deployment.
-        if: ${{ needs.build_test_deploy.result == 'failure' }}
+        if: ${{ needs.deploy.result == 'failure' }}
         run: |
           aws ses send-email --from "d.hayesacademy23@gmail.com" --destination "ToAddresses=d.hayesacademy23@gmail.com" \
           --message "Subject={Data=Deployment Failed,Charset=utf8},Body={Text={Data=Please see the pipeline logs for further details.,Charset=utf8}}"
   
       - name: Notify Teams of Failure # Sends a message in a Microsoft Teams channel notifying of failed deployment.
-        if: ${{ needs.build_test_deploy.result == 'failure' }}
+        if: ${{ needs.deploy.result == 'failure' }}
         uses: aliencube/microsoft-teams-actions@v0.8.0
         with:
           webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
@@ -149,4 +167,3 @@ jobs:
           summary: 'The deployment pipeline has failed.'
           theme_color: 'FF0000'
           text: 'Deployment to production has FAILED.'
-
