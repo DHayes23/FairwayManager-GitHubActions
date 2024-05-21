@@ -66,6 +66,14 @@ jobs:
         name: test-results
         path: ./TestResults/test_results.trx
 
+    - name: Initialize CodeQL # Initializes CodeQL to scan C# code.
+      uses: github/codeql-action/init@v3
+      with:
+        languages: 'csharp'
+
+    - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
+      uses: github/codeql-action/analyze@v3
+
     - name: Publish Application # Prepares the application for deployment by adding all of its files and dependencies to a folder.
       run: dotnet publish -r win-x64 --self-contained -c Release -o ./publish
 
@@ -79,7 +87,6 @@ jobs:
         path: deploy.zip
 
   sonarcloud_analysis:
-    needs: build_test
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Code # Necessary for SonarCloud analysis to access the source code.
@@ -96,32 +103,8 @@ jobs:
           -Dsonar.organization=dhayes23
           -Dsonar.qualitygate.wait=true
 
-  codeql_analysis:
-    needs: build_test
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout Code # Necessary for CodeQL analysis to access the source code.
-      uses: actions/checkout@v3
-      
-    - name: Set Up .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '8.0.x'
-
-    - name: Initialize CodeQL # Initializes CodeQL to scan C# code.
-      uses: github/codeql-action/init@v3
-      with:
-        languages: 'csharp'
-        
-    - name: Build with CodeQL
-      run: |
-        dotnet build --no-restore -c Release
-
-    - name: Perform CodeQL Analysis # Analyses the code using CodeQL.
-      uses: github/codeql-action/analyze@v3
-
   deploy:
-    needs: [sonarcloud_analysis, codeql_analysis]
+    needs: [build_test, sonarcloud_analysis]
     runs-on: ubuntu-latest
     
     steps:
