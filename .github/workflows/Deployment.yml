@@ -149,7 +149,7 @@ jobs:
       - name: Send Success Email # Sends an email notifying of successful deployment.
         if: ${{ needs.deploy.result == 'success' }}
         run: |
-          aws ses send-email --from "${{ secrets.EMAIL_SOURCE }}" --destination "ToAddresses=${{ secrets.EMAIL_RECIPIENTS }}" \
+          aws ses send-email --from "${{ secrets.EMAIL_SENDER }}" --destination "ToAddresses=${{ secrets.EMAIL_RECIPIENTS }}" \
           --message "Subject={Data=Deployment Successful,Charset=utf8},Body={Text={Data=Deployment to production was successful.,Charset=utf8}}"
 
       - name: Notify Teams of Success # Sends a message in a Microsoft Teams channel notifying of successful deployment.
@@ -177,7 +177,7 @@ jobs:
       - name: Send Failure Email # Sends an email notifying of a failed deployment.
         if: ${{ needs.deploy.result == 'failure' || (needs.build_test.result == 'failure' || needs.sonarcloud_analysis.result == 'failure') }}
         run: |
-          aws ses send-email --from "${{ secrets.EMAIL_SOURCE }}" --destination "ToAddresses=${{ secrets.EMAIL_RECIPIENTS }}" \
+          aws ses send-email --from "${{ secrets.EMAIL_SENDER }}" --destination "ToAddresses=${{ secrets.EMAIL_RECIPIENTS }}" \
           --message "Subject={Data=Deployment Failed,Charset=utf8},Body={Text={Data=Please see the pipeline logs for further details.,Charset=utf8}}"
 
       - name: Notify Teams of Failure # Sends a message in a Microsoft Teams channel notifying of failed deployment.
