@@ -129,7 +129,7 @@ jobs:
         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         application_name: FairwayManager2
         environment_name: FairwayManager2-env-win-2
-        version_label: prod-69  # Manually specify the version for this deployment
+        version_label: prod-77  # Manually specify the version for this deployment
         region: ${{ secrets.AWS_REGION }}
         deployment_package: deploy.zip
         wait_for_environment_recovery: 600
