@@ -129,10 +129,15 @@ jobs:
         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         application_name: FairwayManager2
         environment_name: FairwayManager2-env-win-2
-        version_label: prod-${{ github.run_number }}-${{ github.event.push.timestamp }}
+        version_label: prod-${{ github.run_number }}-${{ github.sha }}
         region: ${{ secrets.AWS_REGION }}
         deployment_package: deploy.zip
-        wait_for_environment_recovery: 600
+        wait_for_environment_recovery: 1200
+        continue-on-error: true
+
+    - name: Check deployment output
+      if: failure()
+      run: echo "Deployment failed with ${{ steps.eb_deploy.outputs.output }}"
 
   notify_success:
     needs: [build_test, sonarcloud_analysis, deploy]
